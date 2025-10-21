@@ -37,6 +37,17 @@
       border-radius:20px; padding:26px;
       box-shadow:0 20px 60px rgba(16,24,40,.08), 0 2px 6px rgba(16,24,40,.06);
     }
+    /* fila superior con botón menú */
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px}
+    .btn-menu{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+      background:linear-gradient(90deg,var(--accent) 0%, var(--accent-2) 100%);
+      color:#fff; text-decoration:none; font-weight:600;
+      box-shadow:0 8px 20px rgba(168,85,247,.25);
+    }
+    .btn-menu:active{transform:translateY(1px)}
+
     h1{margin:0 0 6px; font-size:clamp(22px,3.2vw,30px); letter-spacing:.2px; font-weight:600}
     form{display:grid; gap:18px; margin-top:10px}
     .grid{display:grid; gap:16px; grid-template-columns:repeat(12,1fr)}
@@ -58,6 +69,7 @@
       color:var(--btn-text);
       box-shadow:0 8px 20px rgba(168,85,247,.25);
     }
+    .btn[disabled]{opacity:.7; cursor:not-allowed}
     .toast{
       padding:10px 12px; border-radius:10px; border:1px solid var(--border);
       background:#fff; color:#475569; font-size:13px;
@@ -66,17 +78,24 @@
     }
     .toast.--show{display:inline-flex}
     .toast.--error{border-color:#fecaca; color:#991b1b; background:#fff0f0}
+    .toast.--ok{border-color:#bbf7d0; color:#065f46; background:#ecfdf5}
   </style>
 </head>
 <body>
   <main class="card" role="main">
-    <h1>Movimiento de Inventario</h1>
 
-    <!-- Solo aparece en caso de error -->
-    <div id="status" class="toast --error"></div>
+    <!-- ===== Botón Menú + título ===== -->
+    <div class="topbar">
+      <a href="menu.html" class="btn-menu">⬅ Menú</a>
+      <h1>Movimiento de Inventario</h1>
+      <span></span>
+    </div>
 
-    <!-- FORM -->
-    <form action="/movimientos-inventario/crear" method="post" novalidate>
+    <!-- Mensajes -->
+    <div id="status" class="toast"></div>
+
+    <!-- FORM (sin action; se envía por fetch JSON) -->
+    <form id="formMov" method="post" novalidate>
       <div class="grid">
         <!-- País -->
         <div class="field span-6">
@@ -137,7 +156,7 @@
 
       <div class="actions">
         <button type="reset" class="btn btn-secondary">Limpiar</button>
-        <button type="submit" class="btn btn-primary">Guardar movimiento</button>
+        <button type="submit" id="btnGuardar" class="btn btn-primary">Guardar movimiento</button>
       </div>
     </form>
   </main>
@@ -150,7 +169,8 @@
       centros: BASE_URL + "/centros-comerciales",
       sucursales: BASE_URL + "/sucursales",
       bodegas: BASE_URL + "/bodegas",
-      productos: BASE_URL + "/productos" // opcional
+      productos: BASE_URL + "/productos", // opcional
+      crearMov: BASE_URL + "/movimientos-inventario/crear"
     };
 
     // DOM
@@ -160,6 +180,8 @@
     const selBod  = document.getElementById('idbodega');
     const selProd = document.getElementById('idproducto');
     const status  = document.getElementById('status');
+    const form    = document.getElementById('formMov');
+    const btnGuardar = document.getElementById('btnGuardar');
 
     // helpers
     const setDisabled = (el, on) => { el.disabled = on; if (on) el.value = ""; };
@@ -185,7 +207,15 @@
     }
     function showError(msg){
       status.textContent = msg;
-      status.classList.add('--show');
+      status.className = 'toast --show --error';
+    }
+    function showOk(msg){
+      status.textContent = msg;
+      status.className = 'toast --show --ok';
+    }
+    function clearMsg(){
+      status.textContent = '';
+      status.className = 'toast';
     }
 
     // cache
@@ -214,7 +244,6 @@
           clearOptions(selProd, 'Selecciona producto…');
         }
 
-        if(!paises.length) showError('Sin datos en Países. Inserta filas en la BD.');
       }catch(e){
         console.error(e);
         showError('No se pudieron cargar catálogos. Verifica /pais, /centros-comerciales, /sucursales y /bodegas.');
@@ -255,6 +284,64 @@
       const bod = cache.bodegas.filter(b => b.idSucursal === idSucursal);
       fillOptions(selBod, bod, b=>b.idBodega, b=> (b.direccion ?? 'Bodega'), 'Selecciona bodega…');
       setDisabled(selBod, bod.length === 0);
+    });
+
+    // ====== Envío como JSON al procedimiento vía endpoint (sin redirigir) ======
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const idBodega = Number(selBod.value);
+      const idTipoMovimiento = Number(document.getElementById('idtipomovimiento').value);
+      const idProducto = Number(selProd.value);
+      const cantidad = Number(document.getElementById('cantidad').value);
+
+      if(!idBodega || !idTipoMovimiento || !idProducto || !cantidad){
+        showError('Completa todos los campos requeridos.');
+        return;
+      }
+
+      // Recuperar idUsuario del login
+      let idUsuario = null;
+      try{
+        const stored = sessionStorage.getItem('usuario');
+        if(stored){ idUsuario = JSON.parse(stored).idUsuario ?? null; }
+      }catch{}
+
+      const payload = { idBodega, idTipoMovimiento, idProducto, cantidad, idUsuario };
+
+      // bloquear botón mientras enviamos
+      const originalText = btnGuardar.textContent;
+      btnGuardar.disabled = true;
+      btnGuardar.textContent = 'Guardando…';
+
+      try{
+        const r = await fetch(API.crearMov, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if(!r.ok){
+          const txt = await r.text();
+          showError(txt || `Error HTTP ${r.status}`);
+          return;
+        }
+
+        const data = await r.json(); // MovimientoInventarioRes { idMovimiento, mensaje }
+        showOk(data.mensaje || `Movimiento creado (ID ${data.idMovimiento}).`);
+
+        // Mantenerse en la página: limpiar cantidad (y si quieres, selects)
+        document.getElementById('cantidad').value = '';
+        document.getElementById('cantidad').focus();
+
+      }catch(err){
+        console.error(err);
+        showError('No se pudo conectar con el servidor.');
+      }finally{
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = originalText;
+      }
     });
   </script>
 </body>

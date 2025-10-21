@@ -116,9 +116,10 @@
   </main>
 
   <script>
-    // Ajusta si usas context-path (p.ej. "/venta")
-    const BASE_URL = "http://localhost:8080"; // "" si es raíz, o "/venta" si configuraste server.servlet.context-path=/venta
-    const ENDPOINT_LOGIN = BASE_URL + "/usuarios/login";
+    // ==== Ajusta si usas context-path (p.ej. "/venta")
+    const BASE_URL  = "http://localhost:8080";     // backend
+    const ENDPOINT_LOGIN = BASE_URL + "/auth/login";
+    const MENU_PAGE = "menu.html";                 // ruta a tu menu (misma carpeta). Cámbialo si está en otra ruta.
 
     const f = document.getElementById('formLogin');
     const btn = document.getElementById('btnLogin');
@@ -167,15 +168,14 @@
           showError(text || 'Usuario o contraseña inválidos.');
         }else{
           const data = await r.json();
-          // Guarda datos mínimos en sessionStorage/localStorage si quieres
+          // Guarda datos mínimos para usarlos en menu.html
           sessionStorage.setItem('usuario', JSON.stringify({
             idUsuario: data.idUsuario,
             nombreUsuario: data.nombreUsuario,
             activo: data.activo
           }));
-          showOk('Acceso concedido. Redirigiendo…');
-          // Cambia a tu dashboard/home
-          setTimeout(() => { window.location.href = BASE_URL + "/"; }, 600);
+          // Redirige a menu.html
+          window.location.href = MENU_PAGE;
         }
       }catch(err){
         console.error(err);

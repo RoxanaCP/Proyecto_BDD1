@@ -5,7 +5,7 @@ import java.util.Objects;
 
 // Clase para clave primaria compuesta (en archivo separado o en el mismo archivo)
 
-class UsuarioRolId implements Serializable {
+public class UsuarioRolId implements Serializable {
 
     private Integer idUsuario;
     private Integer idRol;

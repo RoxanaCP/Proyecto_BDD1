@@ -5,7 +5,7 @@ import java.util.Objects;
 
 // Clase para la clave compuesta
 
-class RolMenuId implements Serializable {
+public class RolMenuId implements Serializable {
 
     private Integer idMenu;
     private Integer idRol;

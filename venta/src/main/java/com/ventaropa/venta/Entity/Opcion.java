@@ -19,30 +19,20 @@ public class Opcion {
     @Column(name = "NOMBREOPCION", nullable = false)
     private String nombreOpcion;
 
+    // NUEVO: mapea la columna RUTA (VARCHAR2)
+    @Column(name = "RUTA")
+    private String ruta;
+
     // Getters y Setters
+    public Integer getIdOpcion() { return idOpcion; }
+    public void setIdOpcion(Integer idOpcion) { this.idOpcion = idOpcion; }
 
-    public Integer getIdOpcion() {
-        return idOpcion;
-    }
+    public Integer getIdMenu() { return idMenu; }
+    public void setIdMenu(Integer idMenu) { this.idMenu = idMenu; }
 
-    public void setIdOpcion(Integer idOpcion) {
-        this.idOpcion = idOpcion;
-    }
+    public String getNombreOpcion() { return nombreOpcion; }
+    public void setNombreOpcion(String nombreOpcion) { this.nombreOpcion = nombreOpcion; }
 
-    public Integer getIdMenu() {
-        return idMenu;
-    }
-
-    public void setIdMenu(Integer idMenu) {
-        this.idMenu = idMenu;
-    }
-
-    public String getNombreOpcion() {
-        return nombreOpcion;
-    }
-
-    public void setNombreOpcion(String nombreOpcion) {
-        this.nombreOpcion = nombreOpcion;
-    }
+    public String getRuta() { return ruta; }
+    public void setRuta(String ruta) { this.ruta = ruta; }
 }
-
