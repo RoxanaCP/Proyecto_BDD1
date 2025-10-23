@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Facturación a clientes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f6f7fb; --panel:#fff; --ink:#0f172a; --muted:#6b7280; --border:#e5e7eb;
+      --brand:#7c3aed; --brand2:#22c55e; --ring:rgba(124,58,237,.25);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:var(--bg); color:var(--ink); font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1100px; margin:20px auto; padding:0 16px}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+    h1{margin:0; font-size:clamp(20px,2.6vw,28px)}
+    .btn-link{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:#fff; text-decoration:none; font-weight:600}
+    .card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 12px 34px rgba(15,23,42,.06); margin-bottom:14px}
+    .grid{display:grid; gap:14px; grid-template-columns:repeat(12,1fr)}
+    .col-6{grid-column:span 12} @media(min-width:800px){ .col-6{grid-column:span 6} }
+    label{display:block; font-size:13px; color:#334155; margin-bottom:6px}
+    input,select{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#fff; outline:none}
+    input:focus,select:focus{box-shadow:0 0 0 4px var(--ring); border-color:var(--brand)}
+    .row{display:flex; gap:8px; align-items:end}
+    .btn{appearance:none; border:none; cursor:pointer; padding:10px 14px; border-radius:10px; font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--brand) 0%, #a855f7 100%); color:#fff}
+    .btn.ghost{background:#fff; border:1px solid var(--border)}
+    .muted{color:var(--muted); font-size:13px}
+    .status{margin:10px 0; padding:10px 12px; border-radius:10px; border:1px solid var(--border); display:none}
+    .status.err{display:block; color:#991b1b; background:#fff1f2; border-color:#fecaca}
+    .status.ok{display:block; color:#065f46; background:#ecfdf5; border-color:#bbf7d0}
+    table{width:100%; border-collapse:collapse; margin-top:10px}
+    th,td{padding:10px; border-bottom:1px solid var(--border); text-align:left; font-size:14px}
+    tfoot td{font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a href="menu.html" class="btn-link">⬅ Menú</a>
+      <h1>Facturación</h1>
+      <span></span>
+    </header>
+
+    <div id="msg" class="status"></div>
+
+    <!-- Cliente -->
+    <section class="card">
+      <h3 style="margin:0 0 10px">Cliente</h3>
+      <div class="grid">
+        <div class="col-6">
+          <label for="idCliente">ID Cliente</label>
+          <div class="row">
+            <input id="idCliente" type="number" placeholder="Ej.: 10" />
+            <button class="btn ghost" type="button" id="btnBuscarCliente">Buscar</button>
+          </div>
+          <div class="muted">Se usa /clientes/{id}/vista (toma nombre/telefono desde PERSONA).</div>
+        </div>
+        <div class="col-6">
+          <label>Datos</label>
+          <div class="card" style="padding:10px">
+            <div><strong>Nombre:</strong> <span id="cliNombre">—</span></div>
+            <div><strong>Teléfono:</strong> <span id="cliTel">—</span></div>
+            <div class="muted"><strong>NIT:</strong> <span id="cliNit">—</span> • <strong>Email:</strong> <span id="cliEmail">—</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Encabezado factura -->
+    <section class="card">
+      <h3 style="margin:0 0 10px">Encabezado</h3>
+      <div class="grid">
+        <div class="col-6">
+          <label for="idTipoVenta">Tipo de venta</label>
+          <select id="idTipoVenta">
+            <option value="" disabled selected>Seleccione…</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label for="idTipoPago">Tipo de pago</label>
+          <select id="idTipoPago">
+            <option value="" disabled selected>Seleccione…</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detalle (simple: 1 renglón) -->
+    <section class="card">
+      <h3 style="margin:0 0 10px">Detalle</h3>
+      <div class="grid">
+        <div class="col-6">
+          <label for="idProducto">Producto</label>
+          <select id="idProducto">
+            <option value="" disabled selected>Seleccione…</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label for="cantidad">Cantidad</label>
+          <input id="cantidad" type="number" min="1" step="1" placeholder="1" />
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Producto</th><th>Cantidad</th></tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td id="tdProd">—</td><td id="tdCant">—</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Total (ref)</td><td id="tdTotal">—</td></tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px">
+      <button class="btn ghost" type="button" id="btnPreview">Previsualizar</button>
+      <button class="btn primary" type="button" id="btnCrear">Crear factura</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== Ajusta si tienes context-path (p.ej. "/venta")
+    const BASE = ""; // "" si está en raíz
+    const API = {
+      clienteVista: (id) => `${BASE}/clientes/${id}/vista`,
+      tipoVenta:    `${BASE}/tipo-venta`,
+      tipoPago:     `${BASE}/tipo-pago`,
+      productos:    `${BASE}/productos`,
+      crearVenta:   `${BASE}/ventas/crear` // tu endpoint que llama al SP
+    };
+
+    const msg = document.getElementById('msg');
+
+    function showOk(t){ msg.textContent=t; msg.className='status ok'; }
+    function showErr(t){ msg.textContent=t; msg.className='status err'; }
+    function clearMsg(){ msg.textContent=''; msg.className='status'; }
+
+    async function jget(url){
+      const r = await fetch(url);
+      if(!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
+      return r.json();
+    }
+
+    // ====== Carga inicial de combos
+    (async function init(){
+      try{
+        clearMsg();
+        const [ventas, pagos, prods] = await Promise.all([
+          jget(API.tipoVenta).catch(()=>[]),
+          jget(API.tipoPago).catch(()=>[]),
+          jget(API.productos).catch(()=>[])
+        ]);
+
+        const selVenta = document.getElementById('idTipoVenta');
+        const selPago  = document.getElementById('idTipoPago');
+        const selProd  = document.getElementById('idProducto');
+
+        for(const v of ventas){ const o=document.createElement('option'); o.value=v.idTipoVenta; o.textContent=v.descripcion; selVenta.appendChild(o); }
+        for(const p of pagos){ const o=document.createElement('option'); o.value=p.idTipoPago;  o.textContent=p.descripcion; selPago.appendChild(o); }
+        for(const p of prods){ const o=document.createElement('option'); o.value=p.idProducto;  o.textContent=p.nombre;     selProd.appendChild(o); }
+
+      }catch(e){
+        console.error(e);
+        showErr('No fue posible cargar catálogos (tipo venta, tipo pago, productos).');
+      }
+    })();
+
+    // ====== Buscar cliente por ID usando /clientes/{id}/vista
+    document.getElementById('btnBuscarCliente').addEventListener('click', async ()=>{
+      const id = Number(document.getElementById('idCliente').value);
+      if(!id){ showErr('Ingresa un ID de cliente.'); return; }
+      try{
+        clearMsg();
+        const c = await jget(API.clienteVista(id)); // {idCliente, idPersona, nombrePersona, telefono, nit?, email?}
+        document.getElementById('cliNombre').textContent = c.nombrePersona ?? '(sin nombre)';
+        document.getElementById('cliTel').textContent    = c.telefono ?? '—';
+        document.getElementById('cliNit').textContent    = c.nit ?? '—';
+        document.getElementById('cliEmail').textContent  = c.email ?? '—';
+        showOk('Cliente cargado.');
+      }catch(e){
+        console.error(e);
+        document.getElementById('cliNombre').textContent = 'No encontrado';
+        document.getElementById('cliTel').textContent    = '—';
+        document.getElementById('cliNit').textContent    = '—';
+        document.getElementById('cliEmail').textContent  = '—';
+        showErr('Cliente no encontrado.');
+      }
+    });
+
+    // ====== Previsualizar renglón (solo UI)
+    document.getElementById('btnPreview').addEventListener('click', ()=>{
+      const selProd = document.getElementById('idProducto');
+      const cant = Number(document.getElementById('cantidad').value || 0);
+      document.getElementById('tdProd').textContent = selProd.options[selProd.selectedIndex]?.text || '—';
+      document.getElementById('tdCant').textContent = cant || '—';
+      document.getElementById('tdTotal').textContent = cant ? `x ${cant}` : '—'; // aquí podrías calcular $ si manejas precios
+    });
+
+    // ====== Crear factura (POST → /ventas/crear)
+    document.getElementById('btnCrear').addEventListener('click', async ()=>{
+      clearMsg();
+      const idCliente = Number(document.getElementById('idCliente').value);
+      const idTipoVenta = Number(document.getElementById('idTipoVenta').value);
+      const idTipoPago  = Number(document.getElementById('idTipoPago').value);
+      const idProducto  = Number(document.getElementById('idProducto').value);
+      const cantidad    = Number(document.getElementById('cantidad').value);
+
+      if(!idCliente || !idTipoVenta || !idTipoPago || !idProducto || !cantidad){
+        showErr('Completa cliente, tipo de venta, tipo de pago, producto y cantidad.');
+        return;
+      }
+
+      // ejemplo payload (ajústalo a tu SP/endpoint)
+      const payload = {
+        idCliente,
+        idTipoVenta,
+        idTipoPago,
+        // idEmpleado, idSucursal podrían venir de sesión si la manejas
+        detalle: [{ idProducto, cantidad }]
+      };
+
+      try{
+        const r = await fetch(API.crearVenta, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if(!r.ok){
+          const t = await r.text();
+          showErr(t || `Error HTTP ${r.status}`);
+          return;
+        }
+        const data = await r.json(); // { idFactura, mensaje } por ejemplo
+        showOk(data.mensaje || `Factura creada (ID ${data.idFactura || 'N/D'})`);
+      }catch(e){
+        console.error(e);
+        showErr('No se pudo crear la factura.');
+      }
+    });
+  </script>
+</body>
+</html>
