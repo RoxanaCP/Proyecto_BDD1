@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Control de Empleados por Sucursal/Turno/Fecha</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg:#f6f7fb; --panel:#ffffff; --muted:#6b7280; --text:#0f172a;
+      --border:#e5e7eb; --accent:#7c3aed; --accent-2:#a855f7; --ring:rgba(124,58,237,.25)
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100dvh; display:grid; place-items:start;
+      background: radial-gradient(1000px 600px at 18% -12%, #eef0fb 0%, var(--bg) 55%);
+      color:var(--text); font-family:"Poppins", system-ui, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap{width:min(1100px,94vw); margin:22px auto}
+    .card{
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:18px; padding:20px;
+      box-shadow:0 16px 46px rgba(16,24,40,.08), 0 2px 6px rgba(16,24,40,.06);
+      margin-bottom:14px;
+    }
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px}
+    .btn-link{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+      background:linear-gradient(90deg,var(--accent) 0%, var(--accent-2) 100%);
+      color:#fff; text-decoration:none; font-weight:600;
+      box-shadow:0 8px 20px rgba(124,58,237,.25);
+    }
+    h1{margin:0; font-size:clamp(22px,3.2vw,30px); font-weight:600}
+
+    .grid{display:grid; gap:14px; grid-template-columns:repeat(12,1fr)}
+    .span-6{grid-column:span 12} .span-4{grid-column:span 12} .span-3{grid-column:span 12}
+    @media (min-width:780px){ .span-6{grid-column:span 6} .span-4{grid-column:span 4} .span-3{grid-column:span 3} }
+    label{font-size:13px; color:#334155; margin-bottom:6px; display:block}
+    select,input[type="date"]{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border);
+      background:#fff; color:var(--text); outline:none; font-size:15px;
+    }
+    select:focus, input:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--ring)}
+
+    .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:6px}
+    .btn{appearance:none; border:none; cursor:pointer; padding:12px 16px; border-radius:12px; font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent) 0%, var(--accent-2) 100%); color:#fff}
+    .btn.ghost{background:#fff; border:1px solid var(--border)}
+    .btn[disabled]{opacity:.7; cursor:not-allowed}
+
+    .status{margin:8px 0 0; padding:10px 12px; border-radius:10px; border:1px solid var(--border); display:none; font-size:13px}
+    .status.ok{display:block; color:#065f46; background:#ecfdf5; border-color:#bbf7d0}
+    .status.err{display:block; color:#991b1b; background:#fff1f2; border-color:#fecaca}
+
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:10px; border-bottom:1px solid var(--border); text-align:left; font-size:14px}
+    thead th{font-weight:700; color:#334155; background:#fafafa}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="btn-link" href="menu.html">⬅ Menú</a>
+      <h1>Control de Empleados</h1>
+      <span></span>
+    </header>
+    <!-- Filtros -->
+    <section class="card">
+      <h3 style="margin:0 0 8px">Filtros</h3>
+      <div id="msg" class="status"></div>
+
+      <div class="grid">
+        <div class="span-6">
+          <label for="idpais">País</label>
+          <select id="idpais">
+            <option value="" disabled selected>Selecciona país…</option>
+          </select>
+        </div>
+
+        <div class="span-6">
+          <label for="idcc">Centro Comercial</label>
+          <select id="idcc" disabled>
+            <option value="" disabled selected>Selecciona centro comercial…</option>
+          </select>
+        </div>
+
+        <div class="span-6">
+          <label for="idsucursal">Sucursal</label>
+          <select id="idsucursal" disabled>
+            <option value="" disabled selected>Selecciona sucursal…</option>
+          </select>
+        </div>
+
+        <div class="span-3">
+          <label for="idturno">Turno</label>
+          <select id="idturno" disabled>
+            <option value="" disabled selected>Selecciona turno…</option>
+          </select>
+        </div>
+
+        <div class="span-3">
+          <label for="fecha">Fecha</label>
+          <input id="fecha" type="date" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" type="button" id="btnLimpiar">Limpiar</button>
+        <button class="btn primary" type="button" id="btnBuscar" disabled>Buscar</button>
+      </div>
+    </section>
+
+    <!-- Resultados -->
+    <section class="card">
+      <h3 style="margin:0 0 8px">Resultados</h3>
+      <p class="muted" id="resumen">Selecciona filtros y pulsa “Buscar”.</p>
+      <div style="overflow:auto">
+        <table id="tabla">
+          <thead>
+            <tr>
+              <th>ID Empleado</th>
+              <th>ID Persona</th>
+              <th>ID Turno</th>
+              <th>ID Sucursal</th>
+              <th>Fecha Ingreso</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Script principal -->
+  <script>
+    const BASE = "";
+    const API = {
+      paises:      BASE + "/pais",
+      centros:     BASE + "/centros-comerciales",
+      sucursales:  BASE + "/sucursales",
+      turnos:      BASE + "/api/turnos",
+      empleados:   (idSucursal,idTurno,fechaISO) => BASE + `/empleados/sucursal/${idSucursal}/turno/${idTurno}/fecha/${fechaISO}`
+    };
+
+    // DOM
+    const selPais = document.getElementById('idpais');
+    const selCC   = document.getElementById('idcc');
+    const selSuc  = document.getElementById('idsucursal');
+    const selTur  = document.getElementById('idturno');
+    const inpFec  = document.getElementById('fecha');
+    const btnBuscar = document.getElementById('btnBuscar');
+    const btnLimpiar= document.getElementById('btnLimpiar');
+    const tbody   = document.getElementById('tbody');
+    const resumen = document.getElementById('resumen');
+    const msg     = document.getElementById('msg');
+
+    let cache = { paises:[], centros:[], sucursales:[], turnos:[] };
+
+    // Helpers UI
+    const showOk  = t => { msg.textContent=t; msg.className='status ok'; };
+    const showErr = t => { msg.textContent=t; msg.className='status err'; };
+    const clearMsg= () => { msg.textContent=''; msg.className='status'; };
+
+    const setDisabled = (el, on) => { el.disabled = on; if (on) el.value = ""; };
+    const clearOptions = (el, placeholder) => {
+      el.innerHTML = "";
+      const o = document.createElement('option');
+      o.value = ""; o.disabled = true; o.selected = true; o.textContent = placeholder;
+      el.appendChild(o);
+    };
+    const fillOptions = (el, items, getValue, getLabel, placeholder) => {
+      clearOptions(el, placeholder);
+      for (const it of items) {
+        const o = document.createElement('option');
+        o.value = getValue(it);
+        o.textContent = getLabel(it);
+        el.appendChild(o);
+      }
+    };
+
+    async function jget(url){
+      const r = await fetch(url);
+      if(!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
+      return r.json();
+    }
+
+    function todayISO(){
+      const d = new Date();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+    // --- renderTabla mejorada ---
+    function renderTabla(list) {
+      tbody.innerHTML = "";
+      const thead = document.querySelector("#tabla thead tr");
+
+      if (!list || list.length === 0) {
+        resumen.textContent = "Sin resultados para los filtros seleccionados.";
+        return;
+      }
+
+      const sample = list[0];
+      const isSimple = "nombrePersona" in sample;
+
+      if (isSimple) {
+        resumen.textContent = `Encontrados ${list.length} registro(s).`;
+        thead.innerHTML = `<th>Nombre Persona</th><th>Fecha Ingreso</th>`;
+
+        for (const e of list) {
+          const tr = document.createElement("tr");
+          const td1 = document.createElement("td");
+          td1.textContent = e.nombrePersona ?? "";
+          const td2 = document.createElement("td");
+          const d = new Date(e.fechaIngreso);
+          td2.textContent = !isNaN(d) ? d.toISOString().slice(0,10) : e.fechaIngreso;
+          tr.append(td1, td2);
+          tbody.appendChild(tr);
+        }
+      } else {
+        resumen.textContent = `Encontrados ${list.length} empleado(s).`;
+        thead.innerHTML = `
+          <th>ID Empleado</th><th>ID Persona</th><th>ID Turno</th><th>ID Sucursal</th><th>Fecha Ingreso</th>
+        `;
+        for (const e of list) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${e.idEmpleado ?? ""}</td>
+            <td>${e.idPersona ?? ""}</td>
+            <td>${e.idTurno ?? ""}</td>
+            <td>${e.idSucursal ?? ""}</td>
+            <td>${new Date(e.fechaIngreso).toISOString().slice(0,10)}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+    }
+
+    // ===== Init =====
+    (async function init(){
+      try{
+        clearMsg();
+        inpFec.value = todayISO();
+
+        const [paises, centros, sucursales, turnos] = await Promise.all([
+          jget(API.paises), jget(API.centros), jget(API.sucursales), jget(API.turnos)
+        ]);
+        cache = {paises, centros, sucursales, turnos};
+
+        fillOptions(selPais, cache.paises, x=>x.idPais, x=>x.nombre, "Selecciona país…");
+        setDisabled(selCC, true); setDisabled(selSuc, true); setDisabled(selTur, false);
+        fillOptions(selTur, cache.turnos, t=>t.idTurno, t=>t.nombre ?? (`Turno ${t.idTurno}`), "Selecciona turno…");
+        updateBuscarEnabled();
+      }catch(e){
+        console.error(e);
+        showErr("No fue posible cargar catálogos.");
+      }
+    })();
+
+    // Cascada de selects
+    selPais.addEventListener('change', ()=>{
+      clearMsg();
+      const idPais = Number(selPais.value);
+      const centrosDelPais = Array.from(
+        new Set(cache.sucursales.filter(s=>s.idPais===idPais).map(s=>s.idCentroComercial))
+      ).map(idCC => cache.centros.find(c => c.idCentroComercial===idCC)).filter(Boolean);
+      fillOptions(selCC, centrosDelPais, c=>c.idCentroComercial, c=>c.nombre, "Selecciona centro comercial…");
+      setDisabled(selCC, centrosDelPais.length===0);
+      clearOptions(selSuc, "Selecciona sucursal…"); setDisabled(selSuc,true);
+      updateBuscarEnabled();
+    });
+
+    selCC.addEventListener('change', ()=>{
+      clearMsg();
+      const idPais = Number(selPais.value);
+      const idCC = Number(selCC.value);
+      const sucFiltradas = cache.sucursales.filter(s=>s.idPais===idPais && s.idCentroComercial===idCC);
+      fillOptions(selSuc, sucFiltradas, s=>s.idSucursal, s=>s.nombre, "Selecciona sucursal…");
+      setDisabled(selSuc, sucFiltradas.length===0);
+      updateBuscarEnabled();
+    });
+
+    selSuc.addEventListener('change', updateBuscarEnabled);
+    selTur.addEventListener('change', updateBuscarEnabled);
+    inpFec.addEventListener('change', updateBuscarEnabled);
+
+    function updateBuscarEnabled(){
+      const ready = Number(selSuc.value) > 0 && Number(selTur.value) > 0 && !!inpFec.value;
+      btnBuscar.disabled = !ready;
+    }
+
+    // Buscar empleados
+    btnBuscar.addEventListener('click', async ()=>{
+      clearMsg();
+      tbody.innerHTML = "";
+      resumen.textContent = "Buscando…";
+
+      const idSucursal = Number(selSuc.value);
+      const idTurno    = Number(selTur.value);
+      const fechaISO   = inpFec.value;
+
+      if(!idSucursal || !idTurno || !fechaISO){
+        showErr("Completa sucursal, turno y fecha.");
+        resumen.textContent = "Faltan filtros.";
+        return;
+      }
+
+      try{
+        const url = API.empleados(idSucursal, idTurno, fechaISO);
+        const data = await jget(url);
+        renderTabla(data);
+        if (!data || data.length===0) showOk("No hay empleados para ese filtro.");
+      }catch(e){
+        console.error(e);
+        showErr("No fue posible consultar empleados.");
+        resumen.textContent = "Error al consultar.";
+      }
+    });
+
+    // Limpiar filtros
+    btnLimpiar.addEventListener('click', ()=>{
+      clearMsg();
+      selPais.value = "";
+      clearOptions(selCC, "Selecciona centro comercial…"); setDisabled(selCC,true);
+      clearOptions(selSuc, "Selecciona sucursal…"); setDisabled(selSuc,true);
+      selTur.value = "";
+      inpFec.value = todayISO();
+      btnBuscar.disabled = true;
+      tbody.innerHTML = "";
+      resumen.textContent = "Selecciona filtros y pulsa “Buscar”.";
+    });
+  </script>
+</body>
+</html>
