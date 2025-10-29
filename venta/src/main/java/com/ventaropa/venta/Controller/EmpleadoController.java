@@ -1,9 +1,12 @@
 package com.ventaropa.venta.Controller;
 
 import com.ventaropa.venta.DTO.EmpleadoVista;
+import com.ventaropa.venta.Entity.Empleado;
+import com.ventaropa.venta.Entity.Persona;
 import com.ventaropa.venta.Service.EmpleadoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -26,4 +29,13 @@ public class EmpleadoController {
     java.sql.Date sqlDate = new java.sql.Date(fecha.getTime());
     return empleadoService.listarPorSucursalTurnoYFecha(idSucursal, idTurno, sqlDate);
   }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<String> obtener(@PathVariable Integer id) {
+    String nombre = empleadoService.buscar(id);
+    return (nombre != null) ? ResponseEntity.ok(nombre) : ResponseEntity.notFound().build();
+  }
+
+
+
 }
