@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Productos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: hsl(0, 0%, 100%);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .container {
+      margin-top: 40px;
+    }
+
+    .card {
+      border: none;
+      border-radius: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+    }
+
+    h1 {
+      color: #5e17eb;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .btn-purple {
+      background: linear-gradient(90deg, #7b2ff7, #9a4eff);
+      border: none;
+      color: #fff;
+      font-weight: 500;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+
+    .btn-purple:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .btn-refresh {
+      background-color: #dcd2f5;
+      color: #4b0082;
+      border: none;
+      border-radius: 10px;
+    }
+
+    .btn-refresh:hover {
+      background-color: #c8b8f1;
+    }
+
+    .btn-menu {
+      background-color: #5e17eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-weight: 500;
+      margin-right: 15px;
+      transition: all 0.3s;
+    }
+
+    .btn-menu:hover {
+      background-color: #3e0fbf;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      border-radius: 10px;
+    }
+
+    th {
+      background-color: #f3eaff;
+      color: #4b0082;
+      font-weight: 600;
+    }
+
+    td, th {
+      padding: 12px;
+    }
+
+    tr:hover {
+      background-color: #f8f4ff;
+    }
+
+    .btn-action {
+      background-color: #f0e4ff;
+      color: #6b3fd1;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 10px;
+      transition: all 0.3s;
+    }
+
+    .btn-action:hover {
+      background-color: #e1ccff;
+      transform: scale(1.05);
+    }
+
+    .modal-header {
+      background-color: #7b2ff7;
+      color: white;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <button class="btn-menu" onclick="location.href='menu.html'">⬅ Menú</button>
+      <h1 class="m-0">Productos registrados</h1>
+    </div>
+
+    <div class="card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="m-0" id="contadorProductos"></p>
+        <div>
+          <button class="btn btn-refresh me-2" onclick="listarProductos()">🔄 Actualizar</button>
+          <button class="btn btn-purple" data-bs-toggle="modal" data-bs-target="#productoModal" onclick="limpiarFormulario()">+ Nuevo Producto</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>NOMBRE</th>
+              <th>PRECIO BASE</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tablaProductos">
+            <!-- Contenido dinámico -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="productoModal" tabindex="-1" aria-labelledby="productoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="productoModalLabel">Agregar Producto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formProducto">
+            <input type="hidden" id="idProducto">
+            <div class="mb-3">
+              <label for="nombre" class="form-label">Nombre del producto</label>
+              <input type="text" class="form-control" id="nombre" required>
+            </div>
+            <div class="mb-3">
+              <label for="precioBase" class="form-label">Precio base</label>
+              <input type="number" class="form-control" id="precioBase" step="0.01" min="0" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-purple" id="btnGuardar">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ✅ Validar sesión
+    const usuario = sessionStorage.getItem("usuario");
+    if (!usuario) {
+      window.location.href = "login.html";
+    }
+
+    // 🔗 Configuración de endpoints
+    const URL = "http://localhost:8080/productos";
+    const tabla = document.getElementById("tablaProductos");
+    const contador = document.getElementById("contadorProductos");
+    const btnGuardar = document.getElementById("btnGuardar");
+    const modal = new bootstrap.Modal(document.getElementById("productoModal"));
+
+    document.addEventListener("DOMContentLoaded", listarProductos);
+    btnGuardar.addEventListener("click", guardarProducto);
+
+    // 📋 Listar productos
+    function listarProductos() {
+      fetch(URL)
+        .then(response => response.json())
+        .then(data => {
+          tabla.innerHTML = "";
+          contador.textContent = `Mostrando ${data.length} productos.`;
+
+          data.forEach(p => {
+            const fila = `
+              <tr>
+                <td>${p.nombre}</td>
+                <td>Q ${p.precioBase?.toFixed(2)}</td>
+                <td>
+                  <button class="btn-action" onclick="editarProducto(${p.idProducto}, '${p.nombre}', ${p.precioBase})">✏️</button>
+                  <button class="btn-action" onclick="eliminarProducto(${p.idProducto})">🗑️</button>
+                </td>
+              </tr>
+            `;
+            tabla.innerHTML += fila;
+          });
+        })
+        .catch(error => console.error("Error al listar productos:", error));
+    }
+
+    // 🧹 Limpiar formulario
+    function limpiarFormulario() {
+      document.getElementById("idProducto").value = "";
+      document.getElementById("nombre").value = "";
+      document.getElementById("precioBase").value = "";
+      document.getElementById("productoModalLabel").textContent = "Agregar Producto";
+    }
+
+    // 💾 Guardar o actualizar producto
+    function guardarProducto() {
+      const id = document.getElementById("idProducto").value;
+      const nombre = document.getElementById("nombre").value.trim();
+      const precioBase = parseFloat(document.getElementById("precioBase").value);
+
+      if (!nombre || isNaN(precioBase)) {
+        alert("Por favor, completa todos los campos.");
+        return;
+      }
+
+      const producto = { nombre, precioBase };
+      const metodo = id ? "PUT" : "POST";
+      const url = id ? `${URL}/${id}` : URL;
+
+      fetch(url, {
+        method: metodo,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(producto)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Error al guardar el producto");
+          modal.hide();
+          listarProductos();
+        })
+        .catch(error => console.error(error));
+    }
+
+    // ✏️ Editar producto
+    function editarProducto(id, nombre, precioBase) {
+      document.getElementById("idProducto").value = id;
+      document.getElementById("nombre").value = nombre;
+      document.getElementById("precioBase").value = precioBase;
+      document.getElementById("productoModalLabel").textContent = "Editar Producto";
+      modal.show();
+    }
+
+    // 🗑️ Eliminar producto
+    function eliminarProducto(id) {
+      if (confirm("¿Seguro que deseas eliminar este producto?")) {
+        fetch(`${URL}/${id}`, { method: "DELETE" })
+          .then(res => {
+            if (res.ok) listarProductos();
+            else alert("No se pudo eliminar el producto.");
+          })
+          .catch(error => console.error(error));
+      }
+    }
+  </script>
+</body>
+</html>

@@ -16,6 +16,8 @@ public class Producto {
     @Column(name = "NOMBRE", nullable = false)
     private String nombre;
 
+    @Column(name = "PRECIO_BASE", nullable = false)
+    private Double precioBase;
     // Getters y Setters
 
     public Integer getIdProducto() {
@@ -32,5 +34,13 @@ public class Producto {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+       public Double getPrecioBase() {
+        return precioBase;
+    }
+
+    public void setPrecioBase(Double precioBase) {
+        this.precioBase = precioBase;
     }
 }

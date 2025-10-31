@@ -1,231 +1,141 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gestión de Clientes</title>
+  <meta charset="UTF-8">
+  <title>Gestión de Facturación</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
-
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#f6f7fb; --panel:#ffffff; --muted:#6b7280; --text:#0f172a;
-      --border:#e5e7eb; --accent:#7c3aed; --accent-2:#a855f7; --ring:rgba(124,58,237,.25)
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f0fa;
+      margin: 0;
+      padding: 0;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0; min-height:100dvh; display:grid; place-items:start;
-      background: radial-gradient(1000px 600px at 18% -12%, #eef0fb 0%, var(--bg) 55%);
-      color:var(--text); font-family:"Poppins", system-ui, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    .wrap{width:min(1100px,94vw); margin:22px auto}
-    .card{
-      background:var(--panel); border:1px solid var(--border);
-      border-radius:18px; padding:20px;
-      box-shadow:0 16px 46px rgba(16,24,40,.08), 0 2px 6px rgba(16,24,40,.06);
-      margin-bottom:14px;
-    }
-    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px}
-    .btn-link{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 14px; border-radius:12px; border:1px solid var(--border);
-      background:linear-gradient(90deg,var(--accent) 0%, var(--accent-2) 100%);
-      color:#fff; text-decoration:none; font-weight:600;
-      box-shadow:0 8px 20px rgba(124,58,237,.25);
-    }
-    h1{margin:0; font-size:clamp(22px,3.2vw,30px); font-weight:600}
 
-    .grid{display:grid; gap:14px; grid-template-columns:repeat(12,1fr)}
-    .span-6{grid-column:span 12} .span-4{grid-column:span 12} .span-3{grid-column:span 12}
-    @media (min-width:780px){ .span-6{grid-column:span 6} .span-4{grid-column:span 4} .span-3{grid-column:span 3} }
-    label{font-size:13px; color:#334155; margin-bottom:6px; display:block}
-    select,input[type="text"],input[type="email"],input[type="date"],input[type="number"]{
-      width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border);
-      background:#fff; color:var(--text); outline:none; font-size:15px;
+    h1 {
+      text-align: center;
+      color: #4b0082;
+      margin-top: 20px;
+      font-weight: 600;
     }
-    select:focus, input:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--ring)}
 
-    .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:6px}
-    .btn{appearance:none; border:none; cursor:pointer; padding:12px 16px; border-radius:12px; font-weight:700}
-    .btn.primary{background:linear-gradient(90deg,var(--accent) 0%, var(--accent-2) 100%); color:#fff}
-    .btn.ghost{background:#fff; border:1px solid var(--border)}
-    .btn[disabled]{opacity:.7; cursor:not-allowed}
-
-    .status{margin:8px 0 0; padding:10px 12px; border-radius:10px; border:1px solid var(--border); display:none; font-size:13px}
-    .status.ok{display:block; color:#065f46; background:#ecfdf5; border-color:#bbf7d0}
-    .status.err{display:block; color:#991b1b; background:#fff1f2; border-color:#fecaca}
-
-    table{width:100%; border-collapse:collapse}
-    th,td{padding:10px; border-bottom:1px solid var(--border); text-align:left; font-size:14px}
-    thead th{font-weight:700; color:#334155; background:#fafafa}
-    .muted{color:var(--muted)}
-
-    .modal{
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center;
+    .card {
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    .modal-content{
-      background:var(--panel); border-radius:16px; padding:22px;
-      width:90%; max-width:480px; box-shadow:0 12px 40px rgba(0,0,0,.15);
+
+    .btn-primary {
+      background-color: #6f42c1;
+      border-color: #6f42c1;
     }
-    .modal.show{display:flex}
+
+    .btn-primary:hover {
+      background-color: #5a32a3;
+      border-color: #5a32a3;
+    }
+
+    .menu-btn {
+      background-color: #6f42c1;
+      border: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .menu-btn:hover {
+      background-color: #5a32a3;
+      transform: scale(1.05);
+    }
+
+    table {
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: #ede6f9;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header>
-      <a class="btn-link" href="menu.html">⬅ Menú</a>
-      <h1>Gestión de Clientes</h1>
-      <button id="btnNuevo" class="btn primary">➕ Nuevo Cliente</button>
-    </header>
+  <div class="container mt-3">
+    <div class="top-bar">
+      <button class="menu-btn" onclick="window.location.href='menu.html'">← Menú</button>
+      <h1>Gestión de Facturación</h1>
+      <div></div> <!-- Espaciador para mantener el título centrado -->
+    </div>
 
-    <!-- Tabla de clientes -->
-    <section class="card">
-      <h3 style="margin:0 0 8px">Clientes registrados</h3>
-      <p class="muted" id="infoClientes">Cargando clientes...</p>
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>ID Cliente</th>
-              <th>Nombre</th>
-              <th>Género</th>
-              <th>Fecha Nac.</th>
-              <th>País (ID)</th>
-              <th>NIT</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Fecha Creación</th>
-            </tr>
-          </thead>
-          <tbody id="tablaClientes"></tbody>
-        </table>
-      </div>
-      <div class="actions">
-        <button id="btnCargar" class="btn ghost">🔄 Actualizar</button>
-      </div>
-    </section>
-  </div>
-
-  <!-- Modal Agregar Cliente -->
-  <div id="modalAgregar" class="modal">
-    <div class="modal-content">
-      <h3>Agregar nuevo cliente</h3>
-      <form id="formAgregar">
-        <div class="grid">
-          <div class="span-6">
-            <label>Nombre</label>
-            <input type="text" id="nombre" required>
-          </div>
-          <div class="span-3">
-            <label>Género</label>
-            <select id="genero" required>
-              <option value="">Seleccione...</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Femenino">Femenino</option>
-            </select>
-          </div>
-          <div class="span-3">
-            <label>Fecha de Nacimiento</label>
-            <input type="date" id="fechaNacimiento" required>
-          </div>
-          <div class="span-3">
-            <label>País (ID)</label>
-            <input type="number" id="idPais" required>
-          </div>
-          <div class="span-3">
-            <label>Teléfono</label>
-            <input type="number" id="telefono" required>
-          </div>
-          <div class="span-3">
-            <label>NIT</label>
-            <input type="text" id="nit">
-          </div>
-          <div class="span-6">
-            <label>Email</label>
-            <input type="email" id="email">
-          </div>
-        </div>
-        <div class="actions">
-          <button type="button" class="btn ghost" id="btnCerrar">Cancelar</button>
-          <button type="submit" class="btn primary">Guardar</button>
-        </div>
-      </form>
+    <!-- Tabla de facturas -->
+    <div class="card mt-4 p-3">
+      <h5 class="mb-3 text-secondary">Listado de Facturas</h5>
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Tipo de Venta</th>
+            <th>Empleado</th>
+            <th>Sucursal</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Total (Q)</th>
+          </tr>
+        </thead>
+        <tbody id="tablaFacturas">
+          <!-- Aquí se llenarán las facturas dinámicamente -->
+        </tbody>
+      </table>
     </div>
   </div>
 
   <script>
-    const API = "http://localhost:8080/clientes";
-    const tbody = document.getElementById("tablaClientes");
-    const infoClientes = document.getElementById("infoClientes");
-    const modal = document.getElementById("modalAgregar");
+    const tabla = document.getElementById("tablaFacturas");
 
-    document.getElementById("btnNuevo").addEventListener("click",()=>modal.classList.add("show"));
-    document.getElementById("btnCerrar").addEventListener("click",()=>modal.classList.remove("show"));
+    // Cargar facturas al iniciar
+    document.addEventListener("DOMContentLoaded", cargarFacturas);
 
-    async function cargarClientes() {
-      tbody.innerHTML = `<tr><td colspan="9" class="muted">Cargando...</td></tr>`;
-      try {
-        const res = await fetch(API);
-        const data = await res.json();
-        tbody.innerHTML = "";
-        let contador = 0;
-
-        for (const c of data) {
-          const vista = await fetch(`${API}/${c.idCliente}/vista`).then(r => r.ok ? r.json() : null);
-          if (!vista) continue;
-          contador++;
-
-          tbody.innerHTML += `
+    function cargarFacturas() {
+      fetch("http://localhost:8080/facturas/listar")
+        .then(res => {
+          if (!res.ok) throw new Error("Error al obtener las facturas");
+          return res.json();
+        })
+        .then(data => {
+          tabla.innerHTML = "";
+          data.forEach(factura => {
+            const fecha = new Date(factura.fecha).toLocaleDateString('es-ES');
+            tabla.innerHTML += `
+              <tr>
+                <td>${factura.tipoVenta}</td>
+                <td>${factura.empleado}</td>
+                <td>${factura.sucursal}</td>
+                <td>${factura.cliente}</td>
+                <td>${fecha}</td>
+                <td>${factura.total}</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(err => {
+          console.error("Error cargando facturas:", err);
+          tabla.innerHTML = `
             <tr>
-              <td>${vista.idCliente}</td>
-              <td>${vista.nombre}</td>
-              <td>${vista.genero}</td>
-              <td>${vista.fechaNacimiento?.slice(0,10) ?? "-"}</td>
-              <td>${vista.idPais ?? "-"}</td>
-              <td>${vista.nit ?? "-"}</td>
-              <td>${vista.email ?? "-"}</td>
-              <td>${vista.telefono ?? "-"}</td>
-              <td>${vista.fechaCreacion?.slice(0,10) ?? "-"}</td>
+              <td colspan="6" class="text-center text-danger">No se pudieron cargar las facturas.</td>
             </tr>
           `;
-        }
-
-        infoClientes.textContent = `Mostrando ${contador} cliente${contador !== 1 ? "s" : ""}.`;
-      } catch {
-        infoClientes.textContent = "Error al cargar clientes.";
-      }
+        });
     }
-
-    document.getElementById("formAgregar").addEventListener("submit", async e => {
-      e.preventDefault();
-      const nuevo = {
-        idPais: parseInt(document.getElementById("idPais").value),
-        nombre: document.getElementById("nombre").value,
-        genero: document.getElementById("genero").value,
-        fechaNacimiento: document.getElementById("fechaNacimiento").value,
-        telefono: parseInt(document.getElementById("telefono").value),
-        nit: document.getElementById("nit").value,
-        email: document.getElementById("email").value
-      };
-      const res = await fetch(`${API}/agregar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevo)
-      });
-      if (res.ok) {
-        alert("✅ Cliente agregado con éxito");
-        modal.classList.remove("show");
-        e.target.reset();
-        cargarClientes();
-      } else {
-        alert("❌ Error al agregar cliente");
-      }
-    });
-
-    document.getElementById("btnCargar").addEventListener("click", cargarClientes);
-    window.addEventListener("DOMContentLoaded", cargarClientes);
   </script>
 </body>
 </html>

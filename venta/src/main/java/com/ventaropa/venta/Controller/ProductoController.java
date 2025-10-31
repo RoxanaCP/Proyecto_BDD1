@@ -16,16 +16,38 @@ public class ProductoController {
     @Autowired
     private ProductoService service;
 
-    // GET /productos -> listar todos
-    @GetMapping
-    public List<Producto> getAll() {
-        return service.listarTodos();
+   @GetMapping
+    public List<Producto> listar() {
+        return service.listarProductos();
     }
 
-    // GET /productos/{id} -> buscar por id
     @GetMapping("/{id}")
-    public ResponseEntity<Producto> getById(@PathVariable Integer id) {
-        Producto p = service.buscarPorId(id);
-        return (p != null) ? ResponseEntity.ok(p) : ResponseEntity.notFound().build();
+    public ResponseEntity<Producto> obtenerPorId(@PathVariable Integer id) {
+        return service.obtenerProductoPorId(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
+      @PostMapping
+    public ResponseEntity<Producto> crear(@RequestBody Producto producto) {
+        Producto nuevo = service.guardarProducto(producto);
+        return ResponseEntity.ok(nuevo);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Producto> actualizar(@PathVariable Integer id, @RequestBody Producto producto) {
+        Producto actualizado = service.actualizarProducto(id, producto);
+        if (actualizado != null)
+            return ResponseEntity.ok(actualizado);
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+        boolean eliminado = service.eliminarProducto(id);
+        if (eliminado)
+            return ResponseEntity.noContent().build();
+        return ResponseEntity.notFound().build();
     }
 }

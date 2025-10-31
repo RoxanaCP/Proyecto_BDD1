@@ -1,6 +1,7 @@
 // src/main/java/com/ventaropa/venta/Controller/FacturaVentaController.java
 package com.ventaropa.venta.Controller;
 
+import com.ventaropa.venta.DTO.FacturaVentaDTO;
 import com.ventaropa.venta.Entity.FacturaVenta;
 import com.ventaropa.venta.Service.FacturaVentaService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -60,4 +61,10 @@ public class FacturaVentaController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date fecha) {
         return service.porDia(fecha);
     }
+
+    @GetMapping("/listar")
+    public List<FacturaVentaDTO> listarFacturas() {
+        return service.obtenerFacturasConNombres();
+    }
+
 }

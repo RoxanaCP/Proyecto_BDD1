@@ -12,7 +12,6 @@
 
   <style>
     :root{
-      /* Tema claro y vivo */
       --bg:#f9fbff; --card:#ffffff; --ink:#0f172a; --muted:#5b6378; --muted2:#8b94a8;
       --brand:#7c3aed; --brand2:#22c55e; --ring:rgba(124,58,237,.25); --divider:#e8ebf3;
       --chipbg:#eef2ff; --chipfg:#3730a3;
@@ -93,21 +92,23 @@
   </div>
 
   <script>
-    // ===== Ajusta si usas context-path (p.ej. "/venta")
-    const BASE = "http://localhost:8080"; // "" si el backend está en raíz. Si no: "http://localhost:8080" o "/venta"
+    // ===== Validar login =====
+    const saved = sessionStorage.getItem('usuario');
+    if (!saved) {
+      window.location.href = "login.html";
+    }
+    const usuario = JSON.parse(saved);
+
+    // ===== Endpoints =====
+    const BASE = "http://localhost:8080";
     const API = {
       rolesPorUsuario: (idUsuario) => `${BASE}/roles/por-usuario/${idUsuario}`,
       menusPorRol:     (idRol)      => `${BASE}/rol-menu/menus-por-rol/${idRol}`,
       opcionesPorMenu: (idMenu)     => `${BASE}/opciones/por-menu/${idMenu}`,
-      modulos:                      `${BASE}/modulos` // opcional para mostrar nombre del módulo
+      modulos:                      `${BASE}/modulos`
     };
 
-    // ===== Recupera usuario logueado (debe existir desde login.html)
-    const saved = sessionStorage.getItem('usuario');
-    if (!saved) window.location.href = "login.html";
-    const usuario = JSON.parse(saved);
-
-    // ===== DOM
+    // ===== DOM =====
     const who = document.getElementById('who');
     const logout = document.getElementById('logout');
     const status = document.getElementById('status');
@@ -116,9 +117,12 @@
     const selRole = document.getElementById('role');
 
     who.textContent = `Usuario: ${usuario.nombreUsuario}`;
-    logout.addEventListener('click', ()=>{ sessionStorage.removeItem('usuario'); window.location.href="login.html"; });
+    logout.addEventListener('click', ()=> {
+      sessionStorage.removeItem('usuario');
+      window.location.href="login.html";
+    });
 
-    // ===== Helpers
+    // ===== Helpers =====
     const show = (msg, err=false) => {
       if(!msg){ status.className='status'; status.textContent=''; status.style.display='none'; return; }
       status.textContent = msg;
@@ -139,7 +143,7 @@
     };
     const jget = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`); return r.json(); };
 
-    // ===== Datos cache
+    // ===== Datos =====
     let roles = [];
     let moduloById = new Map();
 
@@ -153,17 +157,14 @@
           return;
         }
 
-        // Cargar módulos (opcional)
         try {
           const mods = await jget(API.modulos);
           moduloById = new Map(mods.map(m => [m.idModulo, m.nombre]));
         } catch { /* no crítico */ }
 
-        // Elegir rol: preferir ADMINISTRADOR si existe
         const rolAdmin = roles.find(r => (r.nombreRol || r.nombre || '').toUpperCase() === 'ADMINISTRADOR');
         const rolElegido = rolAdmin || roles[0];
 
-        // Si varios roles y no es admin, muestro selector
         if (!rolAdmin && roles.length > 1) {
           roleBar.style.display = 'flex';
           fillSelect(selRole, roles, r=>r.idRol, r=>r.nombreRol || r.nombre, 'Selecciona rol…');
@@ -222,25 +223,15 @@
       if (opciones && opciones.length){
         for (const op of opciones) {
           const li = document.createElement('li'); li.className='opt';
-
-          const span = document.createElement('span');
-          span.className='opt-name';
-          span.textContent = op.nombreOpcion ?? op.nombre ?? 'Opción';
-          li.appendChild(span);
-
+          const span = document.createElement('span'); span.className='opt-name'; span.textContent = op.nombreOpcion ?? op.nombre ?? 'Opción';
+          const btn = document.createElement('button'); btn.className='go'; btn.textContent='Ir';
           const ruta = op.rutaHtml ?? op.ruta ?? op.url ?? null;
-          const btn = document.createElement('button');
-          btn.className = 'go';
-          btn.textContent = 'Ir';
           if (ruta){
-            btn.addEventListener('click', ()=> { window.location.href = ruta; });
+            btn.addEventListener('click', ()=> window.location.href = ruta);
           } else {
-            btn.disabled = true;
-            btn.title = 'Sin ruta configurada';
+            btn.disabled = true; btn.title = 'Sin ruta configurada';
           }
-          li.appendChild(btn);
-
-          ul.appendChild(li);
+          li.append(span, btn); ul.appendChild(li);
         }
       } else {
         const li = document.createElement('li'); li.className='opt';
@@ -254,7 +245,6 @@
       grid.appendChild(col);
     }
 
-    // go!
     init();
   </script>
 </body>

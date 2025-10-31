@@ -116,7 +116,9 @@
 </div>
 
 <script>
-  // ===== Ajusta si tu app tiene context-path
+
+
+  // --- CONFIG API ---
   const BASE = "";
   const API = {
     clienteVista: (id) => `${BASE}/clientes/${id}/vista`,
@@ -126,22 +128,17 @@
     crearVenta:   `${BASE}/ventas/crear`
   };
 
-  // Estado UI
   const msg = document.getElementById('msg');
   const tbody = document.getElementById('tbody');
   const tdTotal = document.getElementById('tdTotal');
-
-  const productosMap = new Map(); // id -> {idProducto, nombre}
-  let detalle = []; // [{idProducto, cantidad}]
+  const productosMap = new Map();
+  let detalle = [];
 
   function showOk(t){ msg.textContent=t; msg.className='status ok'; }
   function showErr(t){ msg.textContent=t; msg.className='status err'; }
   function clearMsg(){ msg.textContent=''; msg.className='status'; }
 
-  function getEmpleadoSesion(){
-    try{ return JSON.parse(sessionStorage.getItem('empleado') || '{}'); }
-    catch{ return {}; }
-  }
+  function getUsuarioSesion(){ return usuario; }
 
   async function jget(url){
     const r = await fetch(url);
@@ -155,7 +152,6 @@
     detalle.forEach((row, i) => {
       const prod = productosMap.get(row.idProducto);
       total += row.cantidad;
-
       const tr = document.createElement('tr');
       const td1 = document.createElement('td'); td1.textContent = prod ? prod.nombre : row.idProducto;
       const td2 = document.createElement('td'); td2.className='right'; td2.textContent = row.cantidad;
@@ -164,39 +160,13 @@
       btnDel.className = 'btn danger'; btnDel.textContent = 'Quitar';
       btnDel.onclick = () => { detalle.splice(i,1); renderDetalle(); };
       td3.appendChild(btnDel);
-
       tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
       tbody.appendChild(tr);
     });
     tdTotal.textContent = total;
   }
 
-  // --- EXTRACTOR DE ERRORES (mejorado) ---
-  function extraerMensajeError(raw) {
-  if (!raw) return '';
-  try {
-    const j = JSON.parse(raw);
-    if (j?.message) return j.message;
-  } catch {}
-  const m = raw.match(/ORA-(2000\d):\s*([^\n\r]+)/); // solo mensajes funcionales 2000x
-  if (m) return m[2].trim();
-  return 'Ocurrió un error al procesar la solicitud.'; // fallback
-}
-
-
-  async function crearFactura(payload, headers) {
-    const r = await fetch(API.crearVenta, { method:'POST', headers, body: JSON.stringify(payload) });
-    if (!r.ok) {
-      let text = '';
-      try { text = await r.text(); } catch(_) {}
-      const limpio = extraerMensajeError(text);
-      showErr(limpio || `Error HTTP ${r.status}`);
-      return null;
-    }
-    return r.json();
-  }
-
-  // Carga inicial catálogos
+  // --- CARGA INICIAL ---
   (async function init(){
     try{
       clearMsg();
@@ -221,89 +191,6 @@
       showErr('No fue posible cargar catálogos.');
     }
   })();
-
-  // Buscar cliente
-  document.getElementById('btnBuscarCliente').addEventListener('click', async ()=>{
-    const id = Number(document.getElementById('idCliente').value);
-    if(!id){ showErr('Ingresa un ID de cliente.'); return; }
-    try{
-      clearMsg();
-      const c = await jget(API.clienteVista(id)); // {idCliente, nombrePersona, telefono, nit, email}
-      document.getElementById('cliNombre').textContent = c.nombrePersona ?? '(sin nombre)';
-      document.getElementById('cliTel').textContent    = c.telefono ?? '—';
-      document.getElementById('cliNit').textContent    = c.nit ?? '—';
-      document.getElementById('cliEmail').textContent  = c.email ?? '—';
-      showOk('Cliente cargado.');
-    }catch(e){
-      console.error(e);
-      document.getElementById('cliNombre').textContent = 'No encontrado';
-      document.getElementById('cliTel').textContent    = '—';
-      document.getElementById('cliNit').textContent    = '—';
-      document.getElementById('cliEmail').textContent  = '—';
-      showErr('Cliente no encontrado.');
-    }
-  });
-
-  // Agregar producto
-  document.getElementById('btnAgregar').addEventListener('click', ()=>{
-    clearMsg();
-    const idProducto = Number(document.getElementById('idProducto').value);
-    const cantidad   = Number(document.getElementById('cantidad').value);
-
-    if(!idProducto){ showErr('Selecciona un producto.'); return; }
-    if(!cantidad || cantidad <= 0){ showErr('Cantidad inválida.'); return; }
-
-    const idx = detalle.findIndex(x => x.idProducto === idProducto);
-    if (idx >= 0) detalle[idx].cantidad += cantidad;
-    else detalle.push({ idProducto, cantidad });
-
-    renderDetalle();
-  });
-
-  // Crear factura (requiere empleado en sesión)
-  document.getElementById('btnCrear').addEventListener('click', async ()=>{
-    clearMsg();
-
-    const idCliente   = Number(document.getElementById('idCliente').value);
-    const idTipoVenta = Number(document.getElementById('idTipoVenta').value);
-    const idTipoPago  = Number(document.getElementById('idTipoPago').value);
-    const emp         = getEmpleadoSesion();
-
-    if(!idCliente || !idTipoVenta || !idTipoPago){
-      showErr('Completa cliente, tipo de venta y tipo de pago.');
-      return;
-    }
-    if(detalle.length === 0){
-      showErr('Agrega al menos un producto.');
-      return;
-    }
-    if (!emp.idEmpleado){
-      showErr('No hay empleado en sesión. Inicia sesión primero.');
-      return;
-    }
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Empleado-Id': String(emp.idEmpleado)
-    };
-
-    const payload = {
-      idCliente,
-      idTipoVenta,
-      idTipoPago,
-      detalle: detalle.map(d => ({ idProducto: d.idProducto, cantidad: d.cantidad }))
-    };
-
-    const data = await crearFactura(payload, headers);
-    if (!data) return; // ya mostramos el error
-    showOk(data.mensaje || `Factura creada (ID ${data.idFactura || 'N/D'})`);
-    detalle = []; renderDetalle();
-  });
-
-  // ---- Ayuda dev opcional (descomenta para simular sesión) ----
-  // if (!sessionStorage.getItem('empleado')) {
-  //   sessionStorage.setItem('empleado', JSON.stringify({ idEmpleado: 1 }));
-  // }
 </script>
 </body>
 </html>
