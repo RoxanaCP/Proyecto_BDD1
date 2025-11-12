@@ -18,24 +18,6 @@ public class MovimientoInventarioCommandService {
     @Transactional
     public MovimientoInventarioRes registrarMovimiento(MovimientoInventarioReq req) {
 
-        // 1) QUITA esto (causa el PLS-00201):
-        // if (req.getIdUsuario() != null) {
-        //     em.createNativeQuery("BEGIN APP_SEC_PKG.SET_USER(:p_user); END;")
-        //       .setParameter("p_user", req.getIdUsuario())
-        //       .executeUpdate();
-        // }
-
-        // 2) LLAMA al SP con la FIRMA ACTUAL (7 parámetros):
-        // INV_API.REGISTRAR_MOVIMIENTO(
-        //   p_idusuario IN NUMBER,
-        //   p_idbodega IN NUMBER,
-        //   p_idproducto IN NUMBER,
-        //   p_idtipomov IN NUMBER,
-        //   p_cantidad IN NUMBER,
-        //   p_fecha IN DATE,
-        //   p_idmov OUT NUMBER
-        // )
-
         StoredProcedureQuery sp = em
             .createStoredProcedureQuery("INV_API.REGISTRAR_MOVIMIENTO")
             .registerStoredProcedureParameter("p_idusuario",  Integer.class, ParameterMode.IN)

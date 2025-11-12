@@ -8,39 +8,46 @@ import java.util.Date;
 public class Bitacora {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bitacora_seq")
-    @SequenceGenerator(name = "bitacora_seq", sequenceName = "BITACORA_SEQ", allocationSize = 1)
-    @Column(name = "IDBITACORA")
-    private Integer idBitacora;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "IDBITACORA", nullable = false)
+    private Long idBitacora;
 
     @Column(name = "IDUSUARIO", nullable = false)
-    private Integer idUsuario;
+    private Long idUsuario;
 
     @Column(name = "FECHA", nullable = false)
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date fecha;
 
-    @Lob
-    @Column(name = "DESCRIPCION", nullable = false)
+    @Column(name = "DESCRIPCION", nullable = false, columnDefinition = "CLOB")
     private String descripcion;
 
-    @Lob
-    @Column(name = "ACCION", nullable = false)
+    @Column(name = "ACCION", nullable = false, columnDefinition = "CLOB")
     private String accion;
 
-    public Integer getIdBitacora() {
+    @Column(name = "VALOR_NUEVO")
+    private Long valorNuevo;
+
+    @Column(name = "VALOR_ANTERIOR")
+    private Long valorAnterior;
+
+    // ---------------------------
+    // Getters y Setters
+    // ---------------------------
+
+    public Long getIdBitacora() {
         return idBitacora;
     }
 
-    public void setIdBitacora(Integer idBitacora) {
+    public void setIdBitacora(Long idBitacora) {
         this.idBitacora = idBitacora;
     }
 
-    public Integer getIdUsuario() {
+    public Long getIdUsuario() {
         return idUsuario;
     }
 
-    public void setIdUsuario(Integer idUsuario) {
+    public void setIdUsuario(Long idUsuario) {
         this.idUsuario = idUsuario;
     }
 
@@ -68,5 +75,19 @@ public class Bitacora {
         this.accion = accion;
     }
 
-    
+    public Long getValorNuevo() {
+        return valorNuevo;
+    }
+
+    public void setValorNuevo(Long valorNuevo) {
+        this.valorNuevo = valorNuevo;
+    }
+
+    public Long getValorAnterior() {
+        return valorAnterior;
+    }
+
+    public void setValorAnterior(Long valorAnterior) {
+        this.valorAnterior = valorAnterior;
+    }
 }

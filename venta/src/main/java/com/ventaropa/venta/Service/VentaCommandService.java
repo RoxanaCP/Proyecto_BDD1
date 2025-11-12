@@ -44,6 +44,11 @@ public VentaCrearRes crear(VentaCrearReq req, Integer idEmpleadoSesion) {
 
         // 2) AGREGAR_DETALLE (uno por renglón)
         for (Det d : req.getDetalle()) {
+            Integer cant = d.getCantidad();
+            if (cant == null || cant <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La cantidad de cada producto debe ser mayor a 0.");
+            }
             StoredProcedureQuery spDet = em.createStoredProcedureQuery("VENTA_API.AGREGAR_DETALLE")
                 .registerStoredProcedureParameter("p_idfactura",  Integer.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("p_idproducto", Integer.class, ParameterMode.IN)
