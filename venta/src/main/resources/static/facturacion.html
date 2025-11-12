@@ -13,43 +13,31 @@
       --border:#e5e7eb; --brand:#7c3aed; --ring:rgba(124,58,237,.25);
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;background:var(--bg);color:var(--ink);
-      font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial,sans-serif
-    }
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:"Poppins",system-ui,Segoe UI,Roboto,Arial,sans-serif}
     .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .btn-link{display:inline-flex;align-items:center;gap:8px;
-      padding:10px 14px;border-radius:12px;border:1px solid var(--border);
-      background:#fff;text-decoration:none;font-weight:600}
+    .btn-link{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;text-decoration:none;font-weight:600}
     h1{margin:0;font-size:clamp(20px,2.6vw,28px)}
-    .card{background:var(--panel);border:1px solid var(--border);
-      border-radius:16px;padding:16px;box-shadow:0 12px 34px rgba(15,23,42,.06);
-      margin-bottom:14px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 12px 34px rgba(15,23,42,.06);margin-bottom:14px}
     .grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
     .col-6{grid-column:span 12} @media(min-width:800px){.col-6{grid-column:span 6}}
     label{display:block;font-size:13px;color:#334155;margin-bottom:6px}
-    input,select{
-      width:100%;padding:10px 12px;border-radius:10px;
-      border:1px solid var(--border);background:#fff;outline:none
-    }
+    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;outline:none}
     input:focus,select:focus{box-shadow:0 0 0 4px var(--ring);border-color:#7c3aed}
     .row{display:flex;gap:8px;align-items:end}
-    .btn{
-      appearance:none;border:none;cursor:pointer;padding:10px 14px;
-      border-radius:10px;font-weight:700
-    }
+    .btn{appearance:none;border:none;cursor:pointer;padding:10px 14px;border-radius:10px;font-weight:700}
     .btn.primary{background:linear-gradient(90deg,#7c3aed 0%, #a855f7 100%);color:#fff}
     .btn.ghost{background:#fff;border:1px solid var(--border)}
     .btn.danger{background:#fff;border:1px solid #fecaca;color:#991b1b}
-    .status{margin:10px 0;padding:10px 12px;border-radius:10px;
-      border:1px solid var(--border);display:none;white-space:pre-line}
+    .status{margin:10px 0;padding:10px 12px;border-radius:10px;border:1px solid var(--border);display:none;white-space:pre-line}
     .status.err{display:block;color:#991b1b;background:#fff1f2;border-color:#fecaca}
     .status.ok{display:block;color:#065f46;background:#ecfdf5;border-color:#bbf7d0}
     table{width:100%;border-collapse:collapse;margin-top:10px}
     th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
     tfoot td{font-weight:700}
     .right{text-align:right}
+    ul{padding-left:16px;list-style-type:disc}
+    ul li{margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
   </style>
 </head>
 <body>
@@ -92,10 +80,6 @@
         <label for="idTipoVenta">Tipo de venta</label>
         <select id="idTipoVenta"><option value="" disabled selected>Seleccione…</option></select>
       </div>
-      <div class="col-6">
-        <label for="idTipoPago">Tipo de pago</label>
-        <select id="idTipoPago"><option value="" disabled selected>Seleccione…</option></select>
-      </div>
     </div>
   </section>
 
@@ -127,154 +111,239 @@
     </table>
   </section>
 
+  <!-- Pagos -->
+  <section class="card">
+    <h3 style="margin:0 0 10px">Pagos</h3>
+    <div class="grid">
+      <div class="col-6">
+        <label for="selPago">Método de pago</label>
+        <select id="selPago"><option value="" disabled selected>Seleccione…</option></select>
+      </div>
+      <div class="col-6">
+        <label for="montoPago">Monto</label>
+        <div class="row">
+          <input id="montoPago" type="number" min="0.01" step="0.01" placeholder="0.00" />
+          <button class="btn ghost" type="button" id="btnAgregarPago">Agregar pago</button>
+        </div>
+      </div>
+    </div>
+    <ul id="listaPagos"></ul>
+  </section>
+
   <div style="display:flex; justify-content:flex-end; gap:8px">
     <button class="btn primary" type="button" id="btnCrear">Crear factura</button>
   </div>
 </div>
 
 <script>
-  const BASE = "http://localhost:8080";
-  const API = {
-    clienteVista: (id) => `${BASE}/clientes/${id}/vista`,
-    tipoVenta:    `${BASE}/tipo-venta`,
-    tipoPago:     `${BASE}/tipo-pago`,
-    productos:    `${BASE}/productos`,
-    crearVenta:   `${BASE}/ventas/crear`
+const BASE = "http://localhost:8080";
+const API = {
+  clienteVista: (id) => `${BASE}/clientes/${id}/vista`,
+  tipoVenta:    `${BASE}/tipo-venta`,
+  tipoPago:     `${BASE}/tipo-pago`,
+  productos:    `${BASE}/productos`,
+  crearVenta:   `${BASE}/ventas/crear`
+};
+
+const msg = document.getElementById('msg');
+const tbody = document.getElementById('tbody');
+const tdTotal = document.getElementById('tdTotal');
+const productosMap = new Map();
+let detalle = [];
+let listaPagos = [];
+
+const selProd = document.getElementById('idProducto');
+const selPago = document.getElementById("selPago");
+const montoPago = document.getElementById("montoPago");
+const ulPagos = document.getElementById("listaPagos");
+const btnAgregarPago = document.getElementById("btnAgregarPago");
+
+// --- Mensajes ---
+function showOk(t){ msg.textContent=t; msg.className='status ok'; }
+function showErr(t){ msg.textContent=t; msg.className='status err'; }
+function clearMsg(){ msg.textContent=''; msg.className='status'; }
+
+// --- Fetch ---
+async function jget(url){
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
+  return r.json();
+}
+
+// --- Buscar Cliente ---
+document.getElementById("btnBuscarCliente").addEventListener("click", async () => {
+  clearMsg();
+  const id = document.getElementById("idCliente").value;
+  if(!id) return showErr("Ingrese un ID de cliente válido.");
+  try{
+    const c = await jget(API.clienteVista(id));
+    document.getElementById("cliNombre").textContent = c.nombrePersona || "—";
+    document.getElementById("cliTel").textContent = c.telefono || "—";
+    document.getElementById("cliNit").textContent = c.nit || "—";
+    document.getElementById("cliEmail").textContent = c.email || "—";
+    showOk("Cliente encontrado correctamente.");
+    checkEnablePagos();
+  }catch(e){
+    showErr("No se encontró el cliente.");
+  }
+});
+
+// --- Render Detalle ---
+function renderDetalle(){
+  tbody.innerHTML = '';
+  let total = 0;
+  detalle.forEach((row, i) => {
+    const prod = productosMap.get(row.idProducto);
+    const subtotal = row.cantidad * (prod?.precioBase || 0);
+    total += subtotal;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${prod?.nombre || '—'}</td>
+      <td class="right">${row.cantidad}</td>
+      <td class="right">Q${subtotal.toFixed(2)}</td>
+      <td class="right"><button class="btn danger" type="button">Quitar</button></td>
+    `;
+    tr.querySelector('button').onclick = () => { 
+      detalle.splice(i,1); 
+      renderDetalle(); 
+      checkEnablePagos();
+    };
+    tbody.appendChild(tr);
+  });
+  tdTotal.textContent = "Q" + total.toFixed(2);
+}
+
+// --- Agregar Producto ---
+document.getElementById("btnAgregar").addEventListener("click", () => {
+  const idProducto = parseInt(selProd.value);
+  const cantidad = parseInt(document.getElementById("cantidad").value);
+  if(!idProducto || !cantidad || cantidad <= 0) return showErr("Seleccione producto y cantidad válida.");
+  detalle.push({idProducto, cantidad});
+  renderDetalle();
+  checkEnablePagos();
+});
+
+// --- Sección de pagos ---
+function togglePagoSection(enable) {
+  selPago.disabled = !enable;
+  montoPago.disabled = !enable;
+  btnAgregarPago.disabled = !enable;
+}
+togglePagoSection(false);
+
+function renderPagos() {
+  ulPagos.innerHTML = "";
+  listaPagos.forEach((p, i) => {
+    const textoPago = selPago.querySelector(`option[value='${p.idTipoPago}']`)?.textContent || `Pago ${p.idTipoPago}`;
+    const li = document.createElement("li");
+    li.textContent = `${textoPago}: Q${p.monto.toFixed(2)}`;
+    const btn = document.createElement("button");
+    btn.textContent = "Quitar";
+    btn.onclick = () => { 
+      listaPagos.splice(i,1); 
+      renderPagos(); 
+    };
+    li.appendChild(btn);
+    ulPagos.appendChild(li);
+  });
+}
+
+btnAgregarPago.addEventListener("click", () => {
+  const idTipoPago = parseInt(selPago.value);
+  const monto = parseFloat(montoPago.value);
+  if(!idTipoPago || !monto || monto <= 0) return showErr("Seleccione método y monto válido.");
+
+  const totalFactura = detalle.reduce((sum, row) => {
+    const prod = productosMap.get(row.idProducto);
+    return sum + (prod?.precioBase || 0) * row.cantidad;
+  }, 0);
+  const totalPagos = listaPagos.reduce((sum, p) => sum + p.monto, 0) + monto;
+
+  if(totalPagos > totalFactura) {
+    return showErr(`El total de pagos Q${totalPagos.toFixed(2)} excede el total de la factura Q${totalFactura.toFixed(2)}.`);
+  }
+
+  listaPagos.push({idTipoPago, monto});
+  renderPagos();
+});
+
+function checkEnablePagos() {
+  const idCliente   = parseInt(document.getElementById("idCliente").value);
+  const idTipoVenta = parseInt(document.getElementById("idTipoVenta").value);
+  const hayDetalle  = detalle.length > 0;
+  togglePagoSection(idCliente && idTipoVenta && hayDetalle);
+}
+
+// --- Crear Factura ---
+document.getElementById("btnCrear").addEventListener("click", async () => {
+  clearMsg();
+  const idCliente   = parseInt(document.getElementById("idCliente").value);
+  const idTipoVenta = parseInt(document.getElementById("idTipoVenta").value);
+
+  if(!idCliente || !idTipoVenta || detalle.length===0 || listaPagos.length===0)
+    return showErr("Complete todos los campos, agregue productos y pagos.");
+
+  const req = {
+    idCliente,
+    idTipoVenta,
+    detalle,
+    pagos: listaPagos
   };
 
-  const msg = document.getElementById('msg');
-  const tbody = document.getElementById('tbody');
-  const tdTotal = document.getElementById('tdTotal');
-  const productosMap = new Map();
-  let detalle = [];
-
-  function showOk(t){ msg.textContent=t; msg.className='status ok'; }
-  function showErr(t){ msg.textContent=t; msg.className='status err'; }
-  function clearMsg(){ msg.textContent=''; msg.className='status'; }
-
-  async function jget(url){
-    const r = await fetch(url);
-    if(!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
-    return r.json();
-  }
-
-  // --- Buscar Cliente ---
-  document.getElementById("btnBuscarCliente").addEventListener("click", async () => {
-    clearMsg();
-    const id = document.getElementById("idCliente").value;
-    if(!id) return showErr("Ingrese un ID de cliente válido.");
-    try{
-      const c = await jget(API.clienteVista(id));
-      document.getElementById("cliNombre").textContent = c.nombrePersona || "—";
-      document.getElementById("cliTel").textContent = c.telefono || "—";
-      document.getElementById("cliNit").textContent = c.nit || "—";
-      document.getElementById("cliEmail").textContent = c.email || "—";
-      showOk("Cliente encontrado correctamente.");
-    }catch(e){
-      showErr("No se encontró el cliente.");
-    }
-  });
-
-  // --- Render Detalle ---
-  function renderDetalle(){
-    tbody.innerHTML = '';
-    let total = 0;
-    detalle.forEach((row, i) => {
-      const prod = productosMap.get(row.idProducto);
-      const subtotal = row.cantidad * (prod?.precioBase || 0);
-      total += subtotal;
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${prod?.nombre || '—'}</td>
-        <td class="right">${row.cantidad}</td>
-        <td class="right">Q${subtotal.toFixed(2)}</td>
-        <td class="right"><button class="btn danger" type="button">Quitar</button></td>
-      `;
-      tr.querySelector('button').onclick = () => { 
-        detalle.splice(i,1); 
-        console.log("Producto eliminado, detalle actual:", detalle); // 👀 log al eliminar
-        renderDetalle(); 
-      };
-      tbody.appendChild(tr);
+  try {
+    const res = await fetch(API.crearVenta, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Empleado-Id": 1
+      },
+      body: JSON.stringify(req)
     });
-    tdTotal.textContent = "Q" + total.toFixed(2);
-  }
 
-  // --- Agregar Producto ---
-  document.getElementById("btnAgregar").addEventListener("click", () => {
-    const idProducto = parseInt(document.getElementById("idProducto").value);
-    const cantidad = parseInt(document.getElementById("cantidad").value);
-    if(!idProducto || !cantidad || cantidad <= 0) return showErr("Seleccione producto y cantidad válida.");
-    detalle.push({idProducto, cantidad});
-    console.log("Producto agregado:", {idProducto, cantidad}); // 👀 log cada producto nuevo
-    console.log("Detalle actual:", detalle); // 👀 log completo del detalle
+    if(!res.ok){
+      const err = await res.json().catch(()=>({message:"Error desconocido"}));
+      throw new Error(err.message);
+    }
+
+    const data = await res.json();
+    showOk(data.message || "Factura creada correctamente.");
+    detalle = [];
+    listaPagos = [];
     renderDetalle();
-  });
+    renderPagos();
+    checkEnablePagos();
+  } catch (e) {
+    showErr(e.message || "No se pudo crear la factura.");
+  }
+});
 
-  // --- Crear Factura ---
-  document.getElementById("btnCrear").addEventListener("click", async () => {
+// --- Carga inicial ---
+(async function init(){
+  try{
     clearMsg();
-    const idCliente   = parseInt(document.getElementById("idCliente").value);
-    const idTipoVenta = parseInt(document.getElementById("idTipoVenta").value);
-    const idTipoPago  = parseInt(document.getElementById("idTipoPago").value);
+    const [ventas, pagos, prods] = await Promise.all([
+      jget(API.tipoVenta).catch(()=>[]),
+      jget(API.tipoPago).catch(()=>[]),
+      jget(API.productos).catch(()=>[])
+    ]);
 
-    if(!idCliente || !idTipoVenta || !idTipoPago || detalle.length===0)
-      return showErr("Complete todos los campos y agregue al menos un producto.");
+    const selVenta = document.getElementById('idTipoVenta');
 
-    const req = { idCliente, idTipoVenta, idTipoPago, detalle };
-    console.log("🔥 Factura lista para enviar al backend:", req); // 👀 log antes de enviar
-
-    try {
-      const res = await fetch(API.crearVenta, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Empleado-Id": 1 // 🔥 Quemado temporalmente
-        },
-        body: JSON.stringify(req)
-      });
-
-      if(!res.ok){
-        const err = await res.json().catch(()=>({message:"Error desconocido"}));
-        throw new Error(err.message);
-      }
-
-      const data = await res.json();
-      showOk(data.message || "Factura creada correctamente.");
-      detalle = [];
-      console.log("✅ Factura creada. Detalle reseteado:", detalle); // 👀 log después de limpiar
-      renderDetalle();
-    } catch (e) {
-      showErr(e.message || "No se pudo crear la factura.");
+    for(const v of ventas){ const o=document.createElement('option'); o.value=v.idTipoVenta; o.textContent=v.descripcion; selVenta.appendChild(o); }
+    for(const p of pagos){ const o=document.createElement('option'); o.value=p.idTipoPago; o.textContent=p.descripcion; selPago.appendChild(o); }
+    for(const p of prods){
+      const o = document.createElement('option'); 
+      o.value = p.idProducto; 
+      o.textContent = p.nombre; 
+      selProd.appendChild(o);
+      productosMap.set(p.idProducto, p);
     }
-  });
-
-  // --- Carga inicial ---
-  (async function init(){
-    try{
-      clearMsg();
-      const [ventas, pagos, prods] = await Promise.all([
-        jget(API.tipoVenta).catch(()=>[]),
-        jget(API.tipoPago).catch(()=>[]),
-        jget(API.productos).catch(()=>[])
-      ]);
-
-      const selVenta = document.getElementById('idTipoVenta');
-      const selPago  = document.getElementById('idTipoPago');
-      const selProd  = document.getElementById('idProducto');
-
-      for(const v of ventas){ const o=document.createElement('option'); o.value=v.idTipoVenta; o.textContent=v.descripcion; selVenta.appendChild(o); }
-      for(const p of pagos){ const o=document.createElement('option'); o.value=p.idTipoPago;  o.textContent=p.descripcion; selPago.appendChild(o); }
-      for(const p of prods){
-        const o=document.createElement('option'); o.value=p.idProducto;  o.textContent=p.nombre; selProd.appendChild(o);
-        productosMap.set(p.idProducto, p);
-      }
-    }catch(e){
-      console.error(e);
-      showErr('No fue posible cargar catálogos.');
-    }
-  })();
+  }catch(e){
+    console.error(e);
+    showErr('No fue posible cargar catálogos.');
+  }
+})();
 </script>
 </body>
 </html>
