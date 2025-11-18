@@ -1,9 +1,10 @@
-// src/main/java/com/ventaropa/venta/Controller/FacturaVentaController.java
 package com.ventaropa.venta.Controller;
 
 import com.ventaropa.venta.DTO.FacturaVentaDTO;
 import com.ventaropa.venta.Entity.FacturaVenta;
 import com.ventaropa.venta.Service.FacturaVentaService;
+import com.ventaropa.venta.Service.VentaQueryService;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,11 @@ import java.util.List;
 public class FacturaVentaController {
 
     private final FacturaVentaService service;
+    private final VentaQueryService queryService;
 
-    public FacturaVentaController(FacturaVentaService service) {
+    public FacturaVentaController(FacturaVentaService service, VentaQueryService queryService) {
         this.service = service;
+        this.queryService = queryService;
     }
 
     // Listar todas
@@ -47,7 +50,7 @@ public class FacturaVentaController {
         return service.porSucursal(idSucursal);
     }
 
-    // Por rango de fechas (YYYY-MM-DD)
+    // Por rango de fechas
     @GetMapping("/por-fecha")
     public List<FacturaVenta> porRango(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date desde,
@@ -55,7 +58,7 @@ public class FacturaVentaController {
         return service.porRango(desde, hasta);
     }
 
-    // Por día exacto (YYYY-MM-DD)
+    // Por día
     @GetMapping("/por-dia")
     public List<FacturaVenta> porDia(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date fecha) {
@@ -65,6 +68,39 @@ public class FacturaVentaController {
     @GetMapping("/listar")
     public List<FacturaVentaDTO> listarFacturas() {
         return service.obtenerFacturasConNombres();
+    }
+
+
+    // =====================================================
+    // NUEVO: DETALLE COMPLETO DE FACTURA — SIEMPRE JSON
+    // =====================================================
+    @GetMapping("/detalle/{id}")
+    public ResponseEntity<?> obtenerDetalle(@PathVariable Integer id) {
+        try {
+            Object resultado = queryService.obtenerFactura(id);
+
+            if (resultado == null) {
+                return ResponseEntity
+                        .status(404)
+                        .body(new RespuestaError("Factura no encontrada"));
+            }
+
+            return ResponseEntity.ok(resultado);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity
+                    .badRequest()
+                    .body(new RespuestaError("Error al obtener el detalle: " + e.getMessage()));
+        }
+    }
+
+    // Clase interna para devolver errores en JSON
+    static class RespuestaError {
+        public String mensaje;
+        public RespuestaError(String mensaje) {
+            this.mensaje = mensaje;
+        }
     }
 
 }

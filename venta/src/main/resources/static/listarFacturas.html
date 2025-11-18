@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado de Facturas</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table, th, td {
+            border: 1px solid #aaa;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        td, th {
+            padding: 8px;
+            text-align: left;
+        }
+
+        #modalDetalle {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #modalContenido {
+            background: #fff;
+            padding: 20px;
+            width: 70%;
+            border-radius: 10px;
+        }
+
+        .cerrar {
+            float: right;
+            cursor: pointer;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Facturas</h1>
+
+<table id="tablaFacturas">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Tipo Venta</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<!-- MODAL DE DETALLE -->
+<div id="modalDetalle">
+    <div id="modalContenido">
+        <span class="cerrar" onclick="cerrarModal()">X</span>
+        <h2>Detalle de Factura</h2>
+
+        <div id="cabeceraFactura"></div>
+
+        <h3>Productos</h3>
+        <table id="tablaDetalles">
+            <thead>
+                <tr>
+                    <th>ID Producto</th>
+                    <th>Nombre</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>Pagos</h3>
+        <table id="tablaPagos">
+            <thead>
+                <tr>
+                    <th>ID Tipo Pago</th>
+                    <th>Tipo Pago</th>
+                    <th>Monto</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+</div>
+
+<script>
+// ===========================
+// 1) CARGAR FACTURAS
+// ===========================
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const resp = await fetch("/facturas/listar");
+        const facturas = await resp.json();
+
+        const tbody = document.querySelector("#tablaFacturas tbody");
+        tbody.innerHTML = "";
+
+        facturas.forEach(f => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${f.idFacturaVenta}</td>
+                <td>${f.cliente}</td>
+                <td>${f.tipoVenta}</td>
+                <td>${f.fecha}</td>
+                <td>${f.total}</td>
+                <td><button onclick="verDetalle(${f.idFacturaVenta})">Ver detalle</button></td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error("Error cargando facturas:", err);
+        alert("No se pudieron cargar las facturas.");
+    }
+});
+
+
+// ===========================
+// 2) VER DETALLE DE FACTURA
+// ===========================
+async function verDetalle(idFactura) {
+    try {
+        if (!idFactura) {
+            console.error("ID factura inválido:", idFactura);
+            alert("No se pudo leer el ID de la factura.");
+            return;
+        }
+
+        const resp = await fetch(`/facturas/detalle/${idFactura}`);
+
+        // ✔️ NUEVO: validar si no viene JSON
+        if (!resp.ok) {
+            const errorText = await resp.text();
+            console.error("Respuesta de error del backend:", errorText);
+            alert("Error al obtener detalle:\n" + errorText);
+            return;
+        }
+
+        const data = await resp.json();
+
+        // ---- CABECERA ----
+        const cab = `
+            <p><strong>ID Factura:</strong> ${data.idFacturaVenta}</p>
+            <p><strong>Cliente:</strong> ${data.cliente}</p>
+            <p><strong>Tipo Venta:</strong> ${data.tipoVenta}</p>
+            <p><strong>Fecha:</strong> ${data.fecha}</p>
+            <p><strong>Total:</strong> Q ${data.total}</p>
+        `;
+        document.getElementById("cabeceraFactura").innerHTML = cab;
+
+
+        // ---- DETALLES ----
+        const tbodyDetalles = document.querySelector("#tablaDetalles tbody");
+        tbodyDetalles.innerHTML = "";
+
+        data.detalles.forEach(d => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${d.idProducto}</td>
+                <td>${d.nombre}</td>
+                <td>${d.cantidad}</td>
+                <td>${d.precioUnitario}</td>
+                <td>${d.subtotal}</td>
+            `;
+
+            tbodyDetalles.appendChild(tr);
+        });
+
+
+        // ---- PAGOS ----
+        const tbodyPagos = document.querySelector("#tablaPagos tbody");
+        tbodyPagos.innerHTML = "";
+
+        data.pagos.forEach(p => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${p.idTipoPago}</td>
+                <td>${p.tipoPago}</td>
+                <td>${p.monto}</td>
+            `;
+
+            tbodyPagos.appendChild(tr);
+        });
+
+        document.getElementById("modalDetalle").style.display = "flex";
+
+    } catch (err) {
+        console.error("Error al cargar detalle:", err);
+        alert("No se pudo cargar el detalle.");
+    }
+}
+
+
+// ===========================
+// 3) CERRAR MODAL
+// ===========================
+function cerrarModal() {
+    document.getElementById("modalDetalle").style.display = "none";
+}
+
+</script>
+
+</body>
+</html>

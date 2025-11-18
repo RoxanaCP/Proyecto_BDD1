@@ -3,7 +3,6 @@ package com.ventaropa.venta.Service;
 import com.ventaropa.venta.DTO.ClienteDTO;
 import com.ventaropa.venta.DTO.ClienteVista;
 import com.ventaropa.venta.Entity.Cliente;
-import com.ventaropa.venta.Entity.Empleado;
 import com.ventaropa.venta.Entity.Persona;
 import com.ventaropa.venta.Repository.ClienteRepository;
 import com.ventaropa.venta.Repository.PersonaRepository;
